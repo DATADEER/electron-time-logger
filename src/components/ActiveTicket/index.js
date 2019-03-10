@@ -7,7 +7,7 @@ import { onEnterKeyDown } from "../../static/js/utils";
 import pauseIcon from "../../static/icons/pause-white.svg";
 import stopIcon from "../../static/icons/stop-white.svg";
 import startIcon from "../../static/icons/play-white.svg";
-
+const { ipcRenderer } = window.require('electron');
 
 const $RecordIndicatorPosition = styled.div`
   top:-1.1rem;
@@ -22,8 +22,6 @@ const $TicketTitle = styled.h2`
   opacity:${(props) => props.isPaused ? 0.4 : 1};
   transition: opacity 300ms ease-in;
 `;
-
-
 
 export class ActiveTicket extends React.Component {
 
@@ -46,6 +44,8 @@ export class ActiveTicket extends React.Component {
         };
 
         this.toggleStartRecording = this.toggleStartRecording.bind(this);
+        this.startRecording = this.startRecording.bind(this);
+        this.stopRecording = this.stopRecording.bind(this);
         this.togglePauseRecording = this.togglePauseRecording.bind(this);
         this.convertDateToTime = this.convertDateToTime.bind(this);
         this.getTimeAlreadyPassed = this.getTimeAlreadyPassed.bind(this);
@@ -54,10 +54,17 @@ export class ActiveTicket extends React.Component {
         this.updateTimer = this.updateTimer.bind(this);
         this.closeTicketIDInput = this.closeTicketIDInput.bind(this);
 
+        ipcRenderer.on("toggle-start", (event, args) => {
+            console.log("RECEIVED MESSAGE ON IPC", event, args);
+            args ? this.startRecording() : this.stopRecording();
+
+        });
+
     }
 
     componentWillUnmount() {
         clearInterval(this.state.activeInterval);
+        ipcRenderer.removeAllListeners(["toggle-start"]);
     }
 
     render(){
@@ -167,47 +174,46 @@ export class ActiveTicket extends React.Component {
     }
 
 
-
     toggleStartRecording(){
-        this.setState((previousState) => {
-            return {isRecording : !previousState.isRecording}
-        });
-
-        const stopRecording = this.state.isRecording;
-
-        if(stopRecording){
-
-            const finalPauseOffset = this.calculatePauseOffset(new Date(),this.state.pausedAt, this.state.pauseOffset, this.state.isPaused);
-            const finalMinutesWorked = this.getTimeAlreadyPassed(new Date(), this.state.startedAt, finalPauseOffset);
-            const timespan = `[${dateFns.format(this.state.startedAt, "HH:mm")}- ${dateFns.format(new Date(), "HH:mm")}]`
-
-
-            localStorage.setItem(this.state.ticketID + timespan || `UNKNOWN-ID${timespan}` , JSON.stringify({
-                minutesWorked: finalMinutesWorked,
-                minutesPaused: finalPauseOffset
-            }));
-
-            this.setState({
-                stoppedAt: new Date(),
-                startedAt: null,
-                activeTimeString: this.getPrefixedMinutes(0),
-                pauseOffset: 0,
-                pausedAt: null,
-                resumedAt: null,
-                isPaused: false,
-                isRecording: false,
-            });
-            clearInterval(this.state.activeInterval);
-
+        if(this.state.isRecording){
+            this.stopRecording()
         }else {
-
-            this.setState({
-                startedAt: new Date(),
-                activeInterval: this.updateTimer()
-            });
-
+            this.startRecording()
         }
+    }
 
+    startRecording(){
+        this.setState({
+            isRecording : true,
+            startedAt: new Date(),
+            activeInterval: this.updateTimer()
+        });
+    }
+
+    stopRecording(){
+        this.setState({isRecording : false});
+
+        const finalPauseOffset = this.calculatePauseOffset(new Date(),this.state.pausedAt, this.state.pauseOffset, this.state.isPaused);
+        const finalMinutesWorked = this.getTimeAlreadyPassed(new Date(), this.state.startedAt, finalPauseOffset);
+        const timespan = `[${dateFns.format(this.state.startedAt, "HH:mm")}- ${dateFns.format(new Date(), "HH:mm")}]`
+
+
+        localStorage.setItem(this.state.ticketID + timespan || `UNKNOWN-ID${timespan}` , JSON.stringify({
+            minutesWorked: finalMinutesWorked,
+            minutesPaused: finalPauseOffset
+        }));
+
+        this.setState({
+            stoppedAt: new Date(),
+            startedAt: null,
+            activeTimeString: this.getPrefixedMinutes(0),
+            pauseOffset: 0,
+            pausedAt: null,
+            resumedAt: null,
+            isPaused: false,
+            isRecording: false,
+        });
+        clearInterval(this.state.activeInterval);
     }
 
 

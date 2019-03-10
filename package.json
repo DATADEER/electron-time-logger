@@ -41,6 +41,7 @@
     "devtron": "^1.4.0",
     "electron": "^4.0.6",
     "electron-builder": "^20.38.5",
+    "electron-devtools-installer": "^2.2.4",
     "postcss-cli": "^6.1.2",
     "tailwindcss": "^0.7.4"
   }

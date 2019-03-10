@@ -1,6 +1,12 @@
 const {handleError} = require("./utils");
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain } = require('electron');
 const path = require('path');
+
+const { default: installExtension, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
+
+installExtension(REACT_DEVELOPER_TOOLS)
+    .then((name) => console.log(`Added Extension:  ${name}`))
+    .catch((err) => console.log('An error occurred: ', err));
 
 
 function createWindow () {
@@ -25,8 +31,37 @@ function scaffoldApplication() {
     })
 }
 
+function toggleStartStop(menuTemplate, trayIcon){
+    if(menuTemplate[0].label === "Start"){
+        menuTemplate[0].label = "Stop";
+        allWindows.main.send("toggle-start", true)
+    }else {
+        menuTemplate[0].label = "Start";
+        allWindows.main.send("toggle-start", false)
+    }
+    const contextMenu = Menu.buildFromTemplate(menuTemplate);
+    trayIcon.setContextMenu(contextMenu);
+
+
+}
+
+function initTray(){
+    const trayIcon = new Tray("tray.png");
+    const menuTemplate = [
+        { label: 'Start', type: 'normal', click: () => toggleStartStop(menuTemplate, trayIcon)},
+    ];
+    const contextMenu = Menu.buildFromTemplate(menuTemplate);
+    trayIcon.setContextMenu(contextMenu);
+
+
+
+}
+
 app.whenReady()
-    .then(scaffoldApplication)
+    .then(() => {
+        initTray();
+        scaffoldApplication()
+    })
     .catch(handleError);
 
 process.on('uncaughtException', function (err) {
