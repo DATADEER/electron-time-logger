@@ -1,6 +1,14 @@
 import React, { Component } from 'react';
 import './App.css';
 import {ActiveTicket} from "./components/ActiveTicket"
+import { setConfig } from 'react-hot-loader'
+import { hot } from 'react-hot-loader/root'
+
+
+setConfig({
+    ignoreSFC: true, // RHL will be __completely__ disabled for SFC
+    pureRender: true, // RHL will not change render method
+});
 
 class App extends Component {
   render() {
@@ -15,4 +23,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default hot(App);

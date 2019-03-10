@@ -85,7 +85,7 @@ export class ActiveTicket extends React.Component {
                     </div>
                 </div>
                 <div className="px-10 pb-2">
-                    <h1 className="mb-4 text-2xl">TICKET-DESCRIPTION</h1>
+                    <h1 className="mb-4 text-2xl">TICKET TITLE</h1>
                     {
                         this.state.isRecording ? (
                             <$TimesContainer className="mb-2">
