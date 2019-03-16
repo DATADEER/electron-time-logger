@@ -55,7 +55,6 @@ export class ActiveTicket extends React.Component {
         this.closeTicketIDInput = this.closeTicketIDInput.bind(this);
 
         ipcRenderer.on("toggle-start", (event, args) => {
-            console.log("RECEIVED MESSAGE ON IPC", event, args);
             args ? this.startRecording() : this.stopRecording();
 
         });
