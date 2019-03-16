@@ -1,7 +1,7 @@
 const {handleError} = require("./utils");
-const {app, BrowserWindow, Menu, Tray, ipcMain} = require('electron');
+const {app, BrowserWindow, Menu, Tray} = require('electron');
 const path = require('path');
-
+require('electron-reload')(__dirname);
 const {default: installExtension, REACT_DEVELOPER_TOOLS} = require('electron-devtools-installer');
 
 
@@ -10,6 +10,8 @@ let allWindows = {};
 function scaffoldApplication() {
     allWindows.main = new BrowserWindow({width: 800, height: 600, show: false});
     allWindows.tray = new BrowserWindow({width: 250, height: 500, show: false, frame: false});
+
+    allWindows.tray.on("blur",() => allWindows.tray.hide());
 
     if (process.env.ELECTRON_IS_DEV) {
         console.log("LOADING DEV VERSION");
@@ -32,15 +34,15 @@ function scaffoldApplication() {
 
 function toggleStartStop(menuTemplate, trayIcon) {
 
-
-
     if (menuTemplate[3].id === "STOP-TICKET") {
+        trayIcon.setImage("src/static/icons/tray/tray.png");
         menuTemplate[3].label = "START JIRA-2314";
         menuTemplate[3].icon = "src/static/icons/tray/play.png";
         menuTemplate[3].id = "START-TICKET";
         menuTemplate[3].accelerator = "Alt+S";
         allWindows.main.send("toggle-start", false)
     } else {
+        trayIcon.setImage("src/static/icons/tray/tray-active.png");
         menuTemplate[3].label = "STOP JIRA-2314";
         menuTemplate[3].icon = "src/static/icons/tray/stop.png";
         menuTemplate[3].id = "STOP-TICKET";
@@ -57,7 +59,7 @@ function initTray() {
     trayIcon.setIgnoreDoubleClickEvents(true);
 
     trayIcon.on('click', (event, bounds)=> {
-        allWindows.tray.setPosition(bounds.x, bounds.y);
+        allWindows.tray.setPosition(bounds.x, (bounds.y + 30));
         allWindows.tray.isVisible() ? allWindows.tray.hide() : allWindows.tray.show();
     });
 
@@ -72,19 +74,12 @@ function initTray() {
                 { label: 'JIRA-2114' },
             ]
         },
-        { label: "settings", click: (event) => {
-            console.log(event, event);
-            allWindows.tray.setPosition(event.position.x,event.position.y);
-            allWindows.tray.show();
-
-        }},
         { type: 'separator' },
         { role: 'quit'}
     ];
     const contextMenu = Menu.buildFromTemplate(menuTemplate);
     //trayIcon.setContextMenu(contextMenu); // click won't be fired if contextMenu is set
     trayIcon.setToolTip("Electron Time Logger")
-
 
 
 }
